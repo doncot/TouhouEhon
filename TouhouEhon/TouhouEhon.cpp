@@ -7,24 +7,34 @@
 class Shakespeare
 {
 public:
-	void Next()
+	std::string Next()
 	{
-		printf("テスト\n1テスト\n");
+		return m_currentText = "テスト\n1テスト";
 	}
 
+
+private:
+	//プロパティ
+	std::string m_currentText;
 };
 
 int main()
 {
 	Shakespeare engine;
 
-	while (1)
+	while (true)
 	{
 		char iBuff;
-		scanf("%c", &iBuff);
+		scanf_s("%c", &iBuff,1);
 		if (iBuff == 'z')
 		{
 			engine.Next();
+			printf("%s", engine.Next().c_str());
+			printf(" ↓\n\n");
+		}
+		else if (iBuff == 'q')
+		{
+			return 0;
 		}
 
 	}
