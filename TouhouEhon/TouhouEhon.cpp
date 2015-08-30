@@ -23,8 +23,6 @@ public:
 
 	string Next()
 	{
-		//return m_currentText = "テスト\n1テスト";
-
 		char buff[MaxBuffLength];
 		while ( fgets(buff,MaxBuffLength,m_fileStream) != nullptr )
 		{
@@ -102,7 +100,7 @@ int main()
 			//コンソールはSJISで表示してる
 			printf("%s", ConvertUtf8ToAnsi(engine.GetCurrentText(), outText));
 
-			printf(" NL\n\n");
+			printf("\n\n>");
 		}
 		else if (iBuff == 'q')
 		{
