@@ -88,12 +88,7 @@ int main()
 		printf(ex.what());
 	}
 
-	if (_wfopen(L"test/Ελληνικά.txt", L"rt") == nullptr)
-	{
-		printf("cannon open alien path\n");
-	}
-
-
+	//main loop
 	while (true)
 	{
 		char iBuff;
