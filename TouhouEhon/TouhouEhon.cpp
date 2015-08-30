@@ -1,4 +1,4 @@
-// TouhouEhon.cpp : ƒRƒ“ƒ\[ƒ‹ ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌƒGƒ“ƒgƒŠ ƒ|ƒCƒ“ƒg‚ğ’è‹`‚µ‚Ü‚·B
+ï»¿// TouhouEhon.cpp : ã‚³ãƒ³ã‚½ãƒ¼ãƒ« ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ã‚¨ãƒ³ãƒˆãƒª ãƒã‚¤ãƒ³ãƒˆã‚’å®šç¾©ã—ã¾ã™ã€‚
 //
 
 #include "stdafx.h"
@@ -23,7 +23,7 @@ public:
 
 	string Next()
 	{
-		//return m_currentText = "ƒeƒXƒg\n1ƒeƒXƒg";
+		//return m_currentText = "ãƒ†ã‚¹ãƒˆ\n1ãƒ†ã‚¹ãƒˆ";
 
 		char buff[MaxBuffLength];
 		while ( fgets(buff,MaxBuffLength,m_fileStream) != nullptr )
@@ -36,18 +36,21 @@ public:
 
 	void OpenScriptFile(const string& filePath)
 	{
-		//m_fileStream = fopen(filePath.c_str(), "r+t,ccs=UTF-8");
-		m_fileStream = fopen(filePath.c_str(), "r");
-		if (m_fileStream == nullptr)
+		//å¿µã®ç‚ºUTF-16ã‚¨ãƒ³ã‚³ã§é–‹ã
+		auto result = _wfopen_s(&m_fileStream, CStringW( filePath.c_str() ), L"r");
+		if (result != 0)
 		{
-			printf("Cannot open %s\n", filePath.c_str());
+			//ãƒ•ã‚¡ã‚¤ãƒ«ã‚ªãƒ¼ãƒ—ãƒ³å¤±æ•—
+			char message[MaxBuffLength];
+			sprintf_s(message,"Cannot open file \"%s\"\n",filePath.c_str());
+			throw runtime_error(message);
 		}
 	}
 
 private:
 	static const int MaxBuffLength = 255;
 
-	//Œ»İ•\¦‚³‚ê‚Ä‚¢‚éƒeƒLƒXƒg
+	//ç¾åœ¨è¡¨ç¤ºã•ã‚Œã¦ã„ã‚‹ãƒ†ã‚­ã‚¹ãƒˆ
 	string m_currentText;
 
 	FILE* m_fileStream;
@@ -60,7 +63,7 @@ char* ConvertUtf8ToSjis(const string& from, char* to)
 	auto* unicodeText = new wchar_t[len];
 	MultiByteToWideChar(CP_UTF8, 0, from.c_str(), -1, unicodeText, len);
 
-	//utf16->sjis
+	//utf16->sjisï¼ˆæ­£ç¢ºã«ã¯ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®ãƒ­ã‚±ãƒ¼ãƒ«ï¼‰
 	len = WideCharToMultiByte(CP_ACP, 0, (OLECHAR*)unicodeText, -1, NULL, 0, NULL, NULL);
 	auto* sjisText = new char[len + 1];
 	WideCharToMultiByte(CP_ACP, 0, (OLECHAR*)unicodeText, -1, sjisText, len, NULL, NULL);
@@ -76,22 +79,35 @@ char* ConvertUtf8ToSjis(const string& from, char* to)
 int main()
 {
 	Shakespeare engine;
-	engine.OpenScriptFile("Scripts/test.txt");
+	try
+	{
+		engine.OpenScriptFile("Scripts/test.txt");
+	}
+	catch (const runtime_error& ex)
+	{
+		printf(ex.what());
+	}
+
+	if (_wfopen(L"test/Î•Î»Î»Î·Î½Î¹ÎºÎ¬.txt", L"rt") == nullptr)
+	{
+		printf("cannon open alien path\n");
+	}
+
 
 	while (true)
 	{
 		char iBuff;
 		scanf_s("%c", &iBuff,1);
-		if (iBuff == 'z')
+		if (iBuff == '\n')
 		{
 			engine.Next();
 
 			char outText[255];
 
-			//ƒRƒ“ƒ\[ƒ‹‚ÍSJIS‚Å•\¦‚µ‚Ä‚é
+			//ã‚³ãƒ³ã‚½ãƒ¼ãƒ«ã¯SJISã§è¡¨ç¤ºã—ã¦ã‚‹
 			printf("%s", ConvertUtf8ToSjis(engine.GetCurrentText(),outText));
 
-			printf(" «\n\n");
+			printf(" NL\n\n");
 		}
 		else if (iBuff == 'q')
 		{

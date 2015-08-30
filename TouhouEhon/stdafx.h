@@ -16,3 +16,4 @@
 
 #include <string>
 #include <Windows.h>
+#include <atlstr.h>
