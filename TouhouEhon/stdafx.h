@@ -15,3 +15,4 @@
 // TODO: プログラムに必要な追加ヘッダーをここで参照してください
 
 #include <string>
+#include <Windows.h>
