@@ -56,7 +56,7 @@ private:
 	FILE* m_fileStream;
 };
 
-char* ConvertUtf8ToSjis(const string& from, char* to)
+char* ConvertUtf8ToAnsi(const string& from, char* to)
 {
 	//utf8->utf16
 	auto len = MultiByteToWideChar(CP_UTF8, 0, from.c_str(), -1, 0, 0);
@@ -100,7 +100,7 @@ int main()
 			char outText[255];
 
 			//コンソールはSJISで表示してる
-			printf("%s", ConvertUtf8ToSjis(engine.GetCurrentText(),outText));
+			printf("%s", ConvertUtf8ToAnsi(engine.GetCurrentText(), outText));
 
 			printf(" NL\n\n");
 		}
