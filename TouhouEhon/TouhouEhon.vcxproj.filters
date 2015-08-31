@@ -22,7 +22,9 @@
     <Text Include="Scripts\test.txt">
       <Filter>Scripts</Filter>
     </Text>
-    <Text Include="Scripts\テスト.txt" />
+    <Text Include="Scripts\テスト.txt">
+      <Filter>Scripts</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

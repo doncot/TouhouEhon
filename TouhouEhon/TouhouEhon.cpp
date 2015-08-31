@@ -27,8 +27,10 @@ public:
 		if (m_displayEnd > m_displayBegin)
 			m_displayBegin = m_displayEnd + 1;
 
+
+
 		//改ページを見つける
-		regex re("\\[p\\]");
+		const regex re(R"(\[p\])");
 		smatch matchResult;
 		const string searchScript(m_displayBegin, m_script.end());
 		if (regex_search(searchScript, matchResult,re))
@@ -66,8 +68,15 @@ public:
 		//カーソルと表示を初期位置に
 		m_displayBegin = m_displayEnd = m_cursor = m_script.begin();
 
-		//改行は全て消しておく
+		//改行は全て消す
 		m_script.erase(remove(m_script.begin(), m_script.end(), '\n'), m_script.end());
+
+		//改行タグを改行に直す
+		{
+			auto temp = regex_replace(m_script, regex(R"(\[r\])"), "\n");
+			m_script = temp;
+		}
+		
 	}
 
 	bool HasReachedEnd()
