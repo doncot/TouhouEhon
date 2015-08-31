@@ -141,13 +141,15 @@ int main()
 	Shakespeare engine;
 	try
 	{
-		engine.OpenScriptFile("Scripts/test.txt");
+		engine.OpenScriptFile("Scripts/Intro.txt");
 	}
 	catch (const runtime_error& ex)
 	{
 		std::cerr << ex.what() << std::endl;
 		return -1;
 	}
+
+	printf(">");
 
 	//main loop
 	while (!engine.HasReachedEnd())
@@ -169,7 +171,6 @@ int main()
 
 			//コンソールはSJISで表示してる
 			printf("%s", ConvertUtf8ToAnsi(engine.GetDisplay(), outText));
-
 			printf("\n\n>");
 		}
 		else if (iBuff == 'q')
