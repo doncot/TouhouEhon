@@ -128,6 +128,9 @@ int main()
 		scanf_s("%c", &iBuff,1);
 		if (iBuff == '\n')
 		{
+			//画面をクリア
+			system("cls");
+
 			engine.Next();
 
 			char outText[255];

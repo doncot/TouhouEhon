@@ -20,6 +20,7 @@
 #include <sstream>
 #include <iterator>
 #include <regex>
+#include <stdlib.h>
 
 #include <Windows.h>
 #include <atlstr.h> //CString—p
