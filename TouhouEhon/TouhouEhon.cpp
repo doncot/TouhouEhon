@@ -8,7 +8,7 @@ using namespace std;
 class Shakespeare
 {
 public:
-	Shakespeare() : IsEnded(false) {}
+	Shakespeare() : IsEnded(false), NewPageFlag(false) {}
 
 	~Shakespeare() {}
 
@@ -23,22 +23,25 @@ public:
 
 	string Next()
 	{
-		//最初以外は更新
-		if (m_displayEnd > m_displayBegin)
-			m_displayBegin = m_displayEnd + 1;
+		NewPageFlag = false;
 
-
-
-		//改ページを見つける
-		const regex re(R"(\[p\])");
-		smatch matchResult;
 		const string searchScript(m_displayBegin, m_script.end());
-		if (regex_search(searchScript, matchResult,re))
+		smatch matchResult;
+
+		//改ページ or クリック待ち
+		if (regex_search(searchScript, matchResult, regex(R"(\[([lp])\])")))
 		{
+			//改ページの場合
+			if (matchResult[1] == "p")
+			{
+				NewPageFlag = true;
+			}
+
+			//タグ前まで行く
 			m_displayEnd = m_displayBegin + matchResult.position();
 
 			//タグは消す
-			m_script.erase(m_displayEnd, m_displayEnd + 2);
+			m_script.erase(m_displayEnd, m_displayEnd + 3);
 
 			return GetDisplay();
 		}
@@ -84,6 +87,17 @@ public:
 		return IsEnded;
 	}
 
+	bool IsNewPageNeeded()
+	{
+		return NewPageFlag;
+	}
+
+	void SendNewPage()
+	{
+		NewPageFlag = false;
+		m_displayBegin = m_displayEnd;
+	}
+
 private:
 	static const int MaxBuffLength = 255;
 
@@ -96,6 +110,8 @@ private:
 	//カーソル（逐次表示の表示地点）
 	string::iterator m_cursor;
 
+	//flags
+	bool NewPageFlag;
 	//最後まで行ったか
 	bool IsEnded;
 };
@@ -141,7 +157,11 @@ int main()
 		if (iBuff == '\n')
 		{
 			//画面をクリア
-			system("cls");
+			if (engine.IsNewPageNeeded())
+			{
+				system("cls");
+				engine.SendNewPage();
+			}
 
 			engine.Next();
 

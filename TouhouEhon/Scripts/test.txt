@@ -1,3 +1,3 @@
 test[p]
-TESTTEST[r]aaaaa[p]
-ggog
+TEST[l]TEST[r]aaaaa[p]
+ggog[p]
