@@ -36,7 +36,7 @@ public:
 			m_displayEnd = m_displayBegin + matchResult.position();
 
 			//タグは消す
-			m_script.erase(m_displayEnd + 1, m_displayEnd + 4);
+			m_script.erase(m_displayEnd, m_displayEnd + 2);
 
 			return GetDisplay();
 		}
@@ -65,6 +65,9 @@ public:
 
 		//カーソルと表示を初期位置に
 		m_displayBegin = m_displayEnd = m_cursor = m_script.begin();
+
+		//改行は全て消しておく
+		m_script.erase(remove(m_script.begin(), m_script.end(), '\n'), m_script.end());
 	}
 
 	bool HasReachedEnd()
@@ -113,7 +116,7 @@ int main()
 	Shakespeare engine;
 	try
 	{
-		engine.OpenScriptFile("Scripts/テスト.txt");
+		engine.OpenScriptFile("Scripts/test.txt");
 	}
 	catch (const runtime_error& ex)
 	{
