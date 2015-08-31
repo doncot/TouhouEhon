@@ -8,50 +8,84 @@ using namespace std;
 class Shakespeare
 {
 public:
-	~Shakespeare()
-	{
-		if (m_fileStream)
-		{
-			fclose(m_fileStream);
-		}
-	}
+	Shakespeare() : IsEnded(false) {}
 
-	string GetCurrentText()
+	~Shakespeare() {}
+
+	string GetDisplay()
 	{
-		return m_currentText;
+		//空
+		if (m_displayEnd <= m_displayBegin)
+			return string("");
+
+		return string(m_displayBegin, m_displayEnd);
 	}
 
 	string Next()
 	{
-		char buff[MaxBuffLength];
-		while ( fgets(buff,MaxBuffLength,m_fileStream) != nullptr )
+		//最初以外は更新
+		if (m_displayEnd > m_displayBegin)
+			m_displayBegin = m_displayEnd + 1;
+
+		//改ページを見つける
+		regex re("\\[p\\]");
+		smatch matchResult;
+		const string searchScript(m_displayBegin, m_script.end());
+		if (regex_search(searchScript, matchResult,re))
 		{
-			m_currentText.append(buff);
+			m_displayEnd = m_displayBegin + matchResult.position();
+
+			//タグは消す
+			m_script.erase(m_displayEnd + 1, m_displayEnd + 4);
+
+			return GetDisplay();
 		}
 
-		return m_currentText;
+		//指示タグがないなら最後までいく
+		m_displayEnd = m_script.end();
+		IsEnded = true;
+		return GetDisplay();
 	}
 
 	void OpenScriptFile(const string& filePath)
 	{
-		//念の為UTF-16エンコで開く
-		auto result = _wfopen_s(&m_fileStream, CStringW( filePath.c_str() ), L"r");
-		if (result != 0)
+		//念の為ファイルパスはUTF-16で開く
+		std::ifstream ifs( CStringW(filePath.c_str()) );
+		if (ifs.fail())
 		{
 			//ファイルオープン失敗
-			char message[MaxBuffLength];
-			sprintf_s(message,"Cannot open file \"%s\"\n",filePath.c_str());
-			throw runtime_error(message);
+			stringstream ss;
+			ss << "Cannot open file \"" << filePath << "\"";
+			throw runtime_error(ss.str());
 		}
+
+		std::istreambuf_iterator<char> it(ifs);
+		std::istreambuf_iterator<char> last;
+		m_script.assign(it, last);
+
+		//カーソルと表示を初期位置に
+		m_displayBegin = m_displayEnd = m_cursor = m_script.begin();
+	}
+
+	bool HasReachedEnd()
+	{
+		return IsEnded;
 	}
 
 private:
 	static const int MaxBuffLength = 255;
 
 	//現在表示されているテキスト
-	string m_currentText;
+	string m_displayText;
 
-	FILE* m_fileStream;
+	string m_script;
+	string::iterator m_displayBegin;
+	string::iterator m_displayEnd;
+	//カーソル（逐次表示の表示地点）
+	string::iterator m_cursor;
+
+	//最後まで行ったか
+	bool IsEnded;
 };
 
 char* ConvertUtf8ToAnsi(const string& from, char* to)
@@ -79,15 +113,16 @@ int main()
 	Shakespeare engine;
 	try
 	{
-		engine.OpenScriptFile("Scripts/test.txt");
+		engine.OpenScriptFile("Scripts/テスト.txt");
 	}
 	catch (const runtime_error& ex)
 	{
-		printf(ex.what());
+		std::cerr << ex.what() << std::endl;
+		return -1;
 	}
 
 	//main loop
-	while (true)
+	while (!engine.HasReachedEnd())
 	{
 		char iBuff;
 		scanf_s("%c", &iBuff,1);
@@ -98,7 +133,7 @@ int main()
 			char outText[255];
 
 			//コンソールはSJISで表示してる
-			printf("%s", ConvertUtf8ToAnsi(engine.GetCurrentText(), outText));
+			printf("%s", ConvertUtf8ToAnsi(engine.GetDisplay(), outText));
 
 			printf("\n\n>");
 		}
@@ -108,6 +143,8 @@ int main()
 		}
 
 	}
+
+	printf("End of game...\n");
 
     return 0;
 }

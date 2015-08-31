@@ -14,6 +14,12 @@
 
 // TODO: プログラムに必要な追加ヘッダーをここで参照してください
 
+#include <fstream>
+#include <iostream>
 #include <string>
+#include <sstream>
+#include <iterator>
+#include <regex>
+
 #include <Windows.h>
-#include <atlstr.h>
+#include <atlstr.h> //CString用
