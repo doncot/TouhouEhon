@@ -8,7 +8,7 @@ using namespace std;
 class Shakespeare
 {
 public:
-	Shakespeare() : IsEnded(false), NewPageFlag(false) {}
+	Shakespeare() : HasEnded(false), NewPageFlag(false) {}
 
 	~Shakespeare() {}
 
@@ -48,7 +48,7 @@ public:
 
 		//指示タグがないなら最後までいく
 		m_displayEnd = m_script.end();
-		IsEnded = true;
+		HasEnded = true;
 		return GetDisplay();
 	}
 
@@ -84,7 +84,7 @@ public:
 
 	bool HasReachedEnd()
 	{
-		return IsEnded;
+		return HasEnded;
 	}
 
 	bool IsNewPageNeeded()
@@ -113,7 +113,7 @@ private:
 	//flags
 	bool NewPageFlag;
 	//最後まで行ったか
-	bool IsEnded;
+	bool HasEnded;
 };
 
 char* ConvertUtf8ToAnsi(const string& from, char* to)
