@@ -1,4 +1,4 @@
-// TouhouEhon.cpp : コンソール アプリケーションのエントリ ポイントを定義します。
+﻿// TouhouEhon.cpp : コンソール アプリケーションのエントリ ポイントを定義します。
 //
 
 #include "stdafx.h"

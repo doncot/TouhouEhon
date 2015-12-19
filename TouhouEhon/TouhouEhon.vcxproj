@@ -145,10 +145,12 @@
   <ItemGroup>
     <Text Include="ReadMe.txt" />
     <Text Include="Scripts\test.txt">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
     </Text>
-    <Text Include="Scripts\intro.txt" />
+    <Text Include="Scripts\intro.txt">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CharacterConverter.h" />
