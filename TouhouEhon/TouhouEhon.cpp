@@ -37,7 +37,7 @@ public:
 			auto tagName = matchedTag.str(1);
 			smatch matchedResult;
 
-			//改ページ or クリック待ち
+#pragma region 改ページ or クリック待ち
 			if (regex_search(tagName, matchedResult, regex(R"(^[lp]$)")))
 			{
 				//改ページの場合
@@ -54,45 +54,52 @@ public:
 
 				return GetDisplay();
 			}
+#pragma endregion
+
+#pragma region 変数入力
+			{
+				stringstream pattern;
+				pattern << Token::TagBegin << Token::Input << Token::WhiteSpace
+					//name
+					<< Token::Name << Token::OpAssign << "(" << Token::Variable << ")"
+					//prompt
+					"(" << Token::WhiteSpace << "prompt" << Token::OpAssign << Token::DoubleQuote << "(" << Token::String << ")" << Token::DoubleQuote << ")?"
+					<< Token::TagEnd;
+
+				if (regex_search(searchScript, matchedResult, regex(pattern.str())))
+				{
+					//覚える
+					m_variables[matchedResult.str(1)] = matchedResult.str(2);
+
+					char promptMessage[255];
+					CharacterConverter::ConvertUtf8ToSJis(matchedResult.str(3), promptMessage,255);
+					printf(">%s\n>", promptMessage);
+					char inputStr[255];
+					scanf_s("%s", inputStr,255);
+					//入力はSJISでくる
+					char sjisStr[255];
+					//変数登録
+					m_variables[matchedResult.str(1)] = CharacterConverter::ConvertSJisToUtf8(inputStr,sjisStr,255);
+#ifdef DEBUG
+					fprintf(stderr, "registered: var %s = %s\n", matchedResult.str(1).c_str(), inputStr);
+#endif
+
+					//タグを飛ばす
+					//タグ前まで行く
+					m_displayEnd = m_displayBegin + matchedResult.position();
+
+					//タグは消す
+					m_script.erase(m_displayEnd, m_displayEnd + matchedResult.length());
+				}
+			}
+#pragma endregion
 
 			//未定義タグ
 			throw ScriptInterpreteException("Undefined tag.");
 		}
 
 
-		////変数入力
-		//{
-		//	stringstream pattern;
-		//	pattern << Token::TagBegin << Token::Input << Token::WhiteSpace
-		//		//name
-		//		<< Token::Name << Token::OpAssign << "(" << Token::Variable << ")"
-		//		//prompt
-		//		"(" << Token::WhiteSpace << "prompt" << Token::OpAssign << Token::DoubleQuote << "(" << Token::String << ")" << Token::DoubleQuote << ")?"
-		//		<< Token::TagEnd;
 
-		//	if (regex_search(searchScript, matchResult, regex(pattern.str())))
-		//	{
-		//		//覚える
-		//		m_variables[matchResult.str(1)] = matchResult.str(2);
-
-		//		char promptMessage[255];
-		//		CharacterConverter::ConvertUtf8ToSJis(matchResult.str(3), promptMessage,255);
-		//		printf(">%s\n>", promptMessage);
-		//		char inputStr[255];
-		//		scanf_s("%s", inputStr,255);
-		//		//入力はSJISでくる
-		//		char sjisStr[255];
-		//		//変数登録
-		//		m_variables[matchResult.str(1)] = CharacterConverter::ConvertSJisToUtf8(inputStr,sjisStr,255);
-
-		//		//タグを飛ばす
-		//		//タグ前まで行く
-		//		m_displayEnd = m_displayBegin + matchResult.position();
-
-		//		//タグは消す
-		//		m_script.erase(m_displayEnd, m_displayEnd + matchResult.length());
-		//	}
-		//}
 
 		////変数出力
 		//{
@@ -256,10 +263,11 @@ int main()
 			}
 			catch (const ScriptInterpreteException& ex)
 			{
-				fprintf(stderr, "ScriptInterpreteException!: ");
-				fprintf(stderr,ex.what());
-				scanf_s("");
+				fprintf(stderr, "ScriptInterpreteException!: %s\n", ex.what());
+				scanf_s("%c",&iBuff,1);
+#ifdef DEBUG
 				exit(1);
+#endif
 			}
 
 			char outText[1024];
