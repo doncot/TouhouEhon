@@ -55,7 +55,7 @@ public:
 			}
 #pragma endregion
 
-#pragma region 変数入力
+#pragma region 変数プロンプト入力
 			{
 				stringstream pattern;
 				pattern << Token::TagBegin << Token::Input << Token::WhiteSpace
@@ -95,6 +95,25 @@ public:
 			}
 #pragma endregion
 
+#pragma region 変数出力
+			{
+				stringstream pattern;
+				pattern << Token::TagBegin << Token::Embedded << Token::WhiteSpace
+					//exp
+					<< Token::Expression << Token::OpAssign << "(" << Token::Variable << ")"
+					<< Token::TagEnd;
+
+				if (regex_search(searchScript, matchedResult, regex(pattern.str())))
+				{
+					m_script.replace(m_displayBegin + matchedTag.position(),
+						m_displayBegin + matchedTag.position() + matchedResult.length(0),
+						m_variables[matchedResult.str(1)]);
+
+					return GetDisplay();
+				}
+			}
+#pragma endregion
+
 			//未定義タグ
 			{
 				char temp[InputBuffLength];
@@ -104,23 +123,6 @@ public:
 				throw ScriptInterpreteException(exMessage.str());
 			}
 		}
-
-
-
-
-		////変数出力
-		//{
-		//	stringstream pattern;
-		//	pattern << Token::TagBegin << Token::Embedded << Token::WhiteSpace
-		//		//exp
-		//		<< Token::Expression << Token::OpAssign << "(" << Token::Variable << ")"
-		//		<< Token::TagEnd;
-
-		//	if (regex_search(searchScript, matchResult, regex(pattern.str())))
-		//	{
-		//		m_script.replace(m_displayBegin, m_displayBegin + matchResult.length(0), m_variables[matchResult.str(1)]);
-		//	}
-		//}
 
 		//指示タグがないなら最後までいく
 		m_displayEnd = m_script.end();
