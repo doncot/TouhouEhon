@@ -1,4 +1,5 @@
 「ページ止め」[l]「ページ改」[p]
-[input name=protagonist prompt="主人公の名前を入力してください"]
+名前を入力してください。[p]
+[input name=protagonist]
 aaa[emb exp=protagonist]aaa[l]
 おわりーーー！

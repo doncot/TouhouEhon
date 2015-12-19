@@ -10,7 +10,7 @@ class Shakespeare
 	struct Token;
 
 public:
-	Shakespeare() : HasEnded(false), NewPageFlag(false) {}
+	Shakespeare() {}
 
 	~Shakespeare() {}
 
@@ -25,7 +25,7 @@ public:
 
 	string Next()
 	{
-		NewPageFlag = false;
+		m_newPageFlag = false;
 
 		const string searchScript(m_displayBegin, m_script.end());
 		smatch matchedTag;
@@ -42,7 +42,7 @@ public:
 				//改ページの場合
 				if (matchedResult.str(0) == "p")
 				{
-					NewPageFlag = true;
+					m_newPageFlag = true;
 				}
 
 				//タグ前まで行く
@@ -67,22 +67,6 @@ public:
 
 				if (regex_search(searchScript, matchedResult, regex(pattern.str())))
 				{
-					//覚える
-					m_variables[matchedResult.str(1)] = matchedResult.str(2);
-
-					char promptMessage[InputBuffLength];
-					CharacterConverter::ConvertUtf8ToSJis(matchedResult.str(3), promptMessage, InputBuffLength);
-					printf(">%s\n>", promptMessage);
-					char inputStr[InputBuffLength];
-					scanf_s("%s", inputStr, InputBuffLength);
-					//入力はSJISでくる
-					char sjisStr[InputBuffLength];
-					//変数登録
-					m_variables[matchedResult.str(1)] = CharacterConverter::ConvertSJisToUtf8(inputStr,sjisStr, InputBuffLength);
-#ifdef DEBUG
-					fprintf(stderr, "registered: var %s=%s\n", matchedResult.str(1).c_str(), inputStr);
-#endif
-
 					//タグを飛ばす
 					//タグ前まで行く
 					m_displayEnd = m_displayBegin + matchedResult.position();
@@ -90,7 +74,9 @@ public:
 					//タグは消す
 					m_script.erase(m_displayEnd, m_displayEnd + matchedResult.length());
 
-					return GetDisplay();
+					m_waitingInputVariable = matchedResult.str(1);
+
+					return string("");
 				}
 			}
 #pragma endregion
@@ -126,7 +112,7 @@ public:
 
 		//指示タグがないなら最後までいく
 		m_displayEnd = m_script.end();
-		HasEnded = true;
+		m_hasEnded = true;
 		return GetDisplay();
 	}
 
@@ -166,37 +152,36 @@ public:
 			m_script = temp;
 		}
 		
-//#pragma region 変数関連
-//		//変数を記憶
-//		{
-//			smatch match;
-//			regex pattern(R"(\[var ([:alpha:][[:alnum:]]*)=\"(.+)\"\])");
-//
-//			if(regex_search(m_script,match,pattern))
-//			{
-//				//覚える
-//				m_variables[match.str(1)] = match.str(2);
-//			}
-//		}
-//
-//#pragma endregion 変数関連
-
 #pragma endregion タグ解析
 	}
 
-	bool HasReachedEnd()
+	void RegisterVariable(const string& assignment)
 	{
-		return HasEnded;
+		//覚える
+		m_variables[m_waitingInputVariable] = assignment;
+
+		//前の値はクリア
+		m_waitingInputVariable.clear();
 	}
 
-	bool IsNewPageNeeded()
+	bool HasReachedEnd() noexcept
 	{
-		return NewPageFlag;
+		return m_hasEnded;
+	}
+
+	bool IsNewPageNeeded() noexcept
+	{
+		return m_newPageFlag;
+	}
+
+	bool IsWaitingForUserToInputVariable()
+	{
+		return !m_waitingInputVariable.empty();
 	}
 
 	void SendNewPage()
 	{
-		NewPageFlag = false;
+		m_newPageFlag = false;
 		m_displayBegin = m_displayEnd;
 	}
 
@@ -217,9 +202,11 @@ private:
 
 
 	//flags
-	bool NewPageFlag;
+	bool m_newPageFlag = false;
 	//最後まで行ったか
-	bool HasEnded;
+	bool m_hasEnded = false;
+	//ユーザーからの操作要求がいるか
+	string m_waitingInputVariable;
 
 #pragma region lexトークン
 	struct Token
@@ -285,11 +272,33 @@ int main()
 #endif
 			}
 
-			char outText[1024];
+			//入力要求がある場合
+			if (engine.IsWaitingForUserToInputVariable())
+			{
+				printf("ENTER:");
+				char inputStr[512];
+				scanf_s("%s", inputStr, 512);
+				//入力はSJISでくる
+				char utf8Str[512];
+				CharacterConverter::ConvertSJisToUtf8(inputStr, utf8Str, 512);
 
-			//コンソールはSJISで表示してる
-			printf("%s", CharacterConverter::ConvertUtf8ToSJis(engine.GetDisplay(), outText, 1024));
-			printf("\n\n>");
+				//変数登録
+				engine.RegisterVariable(utf8Str);
+
+#ifdef DEBUG
+				fprintf(stderr, "registered: %s\n", inputStr);
+#endif
+
+				continue;
+			}
+			
+			//出力
+			{
+				char outText[1024];
+				//コンソールはSJISで表示してる
+				printf("%s", CharacterConverter::ConvertUtf8ToSJis(engine.GetDisplay(), outText, 1024));
+				printf("\n\n>");
+			}
 		}
 		else if (iBuff == 'q')
 		{
