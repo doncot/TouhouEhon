@@ -1,7 +1,6 @@
-「お話しを読む前に登録のテストです」[p]
 「ページ止め」[l]「ページ改」[p]
-「主人公の名前は？」[p]
 [input name=protagonist prompt="主人公の名前を入力してください"]
 あああ[p]
-[emb exp=protagonist]
-主人公の名前は[emb exp=protagonist]です。
+;[emb exp=protagonist]
+;主人公の名前は[emb exp=protagonist]です。
+おわりーーー！

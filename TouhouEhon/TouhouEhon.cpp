@@ -81,7 +81,7 @@ public:
 					//変数登録
 					m_variables[matchedResult.str(1)] = CharacterConverter::ConvertSJisToUtf8(inputStr,sjisStr,255);
 #ifdef DEBUG
-					fprintf(stderr, "registered: var %s = %s\n", matchedResult.str(1).c_str(), inputStr);
+					fprintf(stderr, "registered: var %s=%s\n", matchedResult.str(1).c_str(), inputStr);
 #endif
 
 					//タグを飛ばす
@@ -90,12 +90,21 @@ public:
 
 					//タグは消す
 					m_script.erase(m_displayEnd, m_displayEnd + matchedResult.length());
+
+					return GetDisplay();
 				}
 			}
 #pragma endregion
 
 			//未定義タグ
-			throw ScriptInterpreteException("Undefined tag.");
+			{
+				char temp[255];
+				CharacterConverter::ConvertUtf8ToSJis(matchedResult.str(), temp, 255);
+				string exMessage = "Undefined tag (";
+				exMessage += temp;
+				exMessage += ")";
+				throw ScriptInterpreteException(exMessage);
+			}
 		}
 
 
@@ -139,6 +148,12 @@ public:
 
 		//カーソルと表示を初期位置に
 		m_displayBegin = m_displayEnd = m_cursor = m_script.begin();
+
+		//（改行の前に）;スタイルのコメント
+		{
+			auto temp = regex_replace(m_script, regex(";.*"), "");
+			m_script = temp;
+		}
 
 		//改行は全て消す
 		m_script.erase(remove(m_script.begin(), m_script.end(), '\n'), m_script.end());
