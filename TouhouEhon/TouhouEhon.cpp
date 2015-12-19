@@ -9,7 +9,6 @@ class Shakespeare
 {
 	struct Token;
 
-
 public:
 	Shakespeare() : HasEnded(false), NewPageFlag(false) {}
 
@@ -71,15 +70,15 @@ public:
 					//覚える
 					m_variables[matchedResult.str(1)] = matchedResult.str(2);
 
-					char promptMessage[255];
-					CharacterConverter::ConvertUtf8ToSJis(matchedResult.str(3), promptMessage,255);
+					char promptMessage[InputBuffLength];
+					CharacterConverter::ConvertUtf8ToSJis(matchedResult.str(3), promptMessage, InputBuffLength);
 					printf(">%s\n>", promptMessage);
-					char inputStr[255];
-					scanf_s("%s", inputStr,255);
+					char inputStr[InputBuffLength];
+					scanf_s("%s", inputStr, InputBuffLength);
 					//入力はSJISでくる
-					char sjisStr[255];
+					char sjisStr[InputBuffLength];
 					//変数登録
-					m_variables[matchedResult.str(1)] = CharacterConverter::ConvertSJisToUtf8(inputStr,sjisStr,255);
+					m_variables[matchedResult.str(1)] = CharacterConverter::ConvertSJisToUtf8(inputStr,sjisStr, InputBuffLength);
 #ifdef DEBUG
 					fprintf(stderr, "registered: var %s=%s\n", matchedResult.str(1).c_str(), inputStr);
 #endif
@@ -98,12 +97,11 @@ public:
 
 			//未定義タグ
 			{
-				char temp[255];
-				CharacterConverter::ConvertUtf8ToSJis(matchedResult.str(), temp, 255);
-				string exMessage = "Undefined tag (";
-				exMessage += temp;
-				exMessage += ")";
-				throw ScriptInterpreteException(exMessage);
+				char temp[InputBuffLength];
+				CharacterConverter::ConvertUtf8ToSJis(matchedResult.str(), temp, InputBuffLength);
+				stringstream exMessage;
+				exMessage  << "Undefined tag (" << temp << ")";
+				throw ScriptInterpreteException(exMessage.str());
 			}
 		}
 
@@ -201,7 +199,7 @@ public:
 	}
 
 private:
-	static const int MaxBuffLength = 255;
+	static const int InputBuffLength = 1024;
 
 	//現在表示されているテキスト
 	string m_displayText;
