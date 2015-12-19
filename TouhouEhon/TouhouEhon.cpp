@@ -1,4 +1,4 @@
-﻿// TouhouEhon.cpp : コンソール アプリケーションのエントリ ポイントを定義します。
+// TouhouEhon.cpp : コンソール アプリケーションのエントリ ポイントを定義します。
 //
 
 #include "stdafx.h"
@@ -29,73 +29,84 @@ public:
 		NewPageFlag = false;
 
 		const string searchScript(m_displayBegin, m_script.end());
-		smatch matchResult;
+		smatch matchedTag;
 
-		//改ページ or クリック待ち
-		if (regex_search(searchScript, matchResult, regex(R"(\[([lp])\])")))
+		//まずタグがあるか調べる
+		if (regex_search(searchScript, matchedTag, regex(R"(\[([^\]]+)\])")))
 		{
-			//改ページの場合
-			if (matchResult[1] == "p")
+			auto tagName = matchedTag.str(1);
+			smatch matchedResult;
+
+			//改ページ or クリック待ち
+			if (regex_search(tagName, matchedResult, regex(R"(^[lp]$)")))
 			{
-				NewPageFlag = true;
-			}
+				//改ページの場合
+				if (matchedResult.str(0) == "p")
+				{
+					NewPageFlag = true;
+				}
 
-			//タグ前まで行く
-			m_displayEnd = m_displayBegin + matchResult.position();
-
-			//タグは消す
-			m_script.erase(m_displayEnd, m_displayEnd + 3);
-
-			return GetDisplay();
-		}
-
-		//変数入力
-		{
-			stringstream pattern;
-			pattern << Token::TagBegin << Token::Input << Token::WhiteSpace
-				//name
-				<< Token::Name << Token::OpAssign << "(" << Token::Variable << ")"
-				//prompt
-				"(" << Token::WhiteSpace << "prompt" << Token::OpAssign << Token::DoubleQuote << "(" << Token::String << ")" << Token::DoubleQuote << ")?"
-				<< Token::TagEnd;
-
-			if (regex_search(searchScript, matchResult, regex(pattern.str())))
-			{
-				//覚える
-				m_variables[matchResult.str(1)] = matchResult.str(2);
-
-				char promptMessage[255];
-				CharacterConverter::ConvertUtf8ToSJis(matchResult.str(3), promptMessage,255);
-				printf(">%s\n>", promptMessage);
-				char inputStr[255];
-				scanf_s("%s", inputStr,255);
-				//入力はSJISでくる
-				char sjisStr[255];
-				//変数登録
-				m_variables[matchResult.str(1)] = CharacterConverter::ConvertSJisToUtf8(inputStr,sjisStr,255);
-
-				//タグを飛ばす
 				//タグ前まで行く
-				m_displayEnd = m_displayBegin + matchResult.position();
+				m_displayEnd = m_displayBegin + matchedTag.position();
 
 				//タグは消す
-				m_script.erase(m_displayEnd, m_displayEnd + matchResult.length());
+				m_script.erase(m_displayEnd, m_displayEnd + 3);
+
+				return GetDisplay();
 			}
+
+			//未定義タグ
+			throw ScriptInterpreteException("Undefined tag.");
 		}
 
-		//変数出力
-		{
-			stringstream pattern;
-			pattern << Token::TagBegin << Token::Embedded << Token::WhiteSpace
-				//exp
-				<< Token::Expression << Token::OpAssign << "(" << Token::Variable << ")"
-				<< Token::TagEnd;
 
-			if (regex_search(searchScript, matchResult, regex(pattern.str())))
-			{
-				m_script.replace(m_displayBegin, m_displayBegin + matchResult.length(0), m_variables[matchResult.str(1)]);
-			}
-		}
+		////変数入力
+		//{
+		//	stringstream pattern;
+		//	pattern << Token::TagBegin << Token::Input << Token::WhiteSpace
+		//		//name
+		//		<< Token::Name << Token::OpAssign << "(" << Token::Variable << ")"
+		//		//prompt
+		//		"(" << Token::WhiteSpace << "prompt" << Token::OpAssign << Token::DoubleQuote << "(" << Token::String << ")" << Token::DoubleQuote << ")?"
+		//		<< Token::TagEnd;
+
+		//	if (regex_search(searchScript, matchResult, regex(pattern.str())))
+		//	{
+		//		//覚える
+		//		m_variables[matchResult.str(1)] = matchResult.str(2);
+
+		//		char promptMessage[255];
+		//		CharacterConverter::ConvertUtf8ToSJis(matchResult.str(3), promptMessage,255);
+		//		printf(">%s\n>", promptMessage);
+		//		char inputStr[255];
+		//		scanf_s("%s", inputStr,255);
+		//		//入力はSJISでくる
+		//		char sjisStr[255];
+		//		//変数登録
+		//		m_variables[matchResult.str(1)] = CharacterConverter::ConvertSJisToUtf8(inputStr,sjisStr,255);
+
+		//		//タグを飛ばす
+		//		//タグ前まで行く
+		//		m_displayEnd = m_displayBegin + matchResult.position();
+
+		//		//タグは消す
+		//		m_script.erase(m_displayEnd, m_displayEnd + matchResult.length());
+		//	}
+		//}
+
+		////変数出力
+		//{
+		//	stringstream pattern;
+		//	pattern << Token::TagBegin << Token::Embedded << Token::WhiteSpace
+		//		//exp
+		//		<< Token::Expression << Token::OpAssign << "(" << Token::Variable << ")"
+		//		<< Token::TagEnd;
+
+		//	if (regex_search(searchScript, matchResult, regex(pattern.str())))
+		//	{
+		//		m_script.replace(m_displayBegin, m_displayBegin + matchResult.length(0), m_variables[matchResult.str(1)]);
+		//	}
+		//}
 
 		//指示タグがないなら最後までいく
 		m_displayEnd = m_script.end();
@@ -133,20 +144,20 @@ public:
 			m_script = temp;
 		}
 		
-#pragma region 変数関連
-		//変数を記憶
-		{
-			smatch match;
-			regex pattern(R"(\[var ([:alpha:][[:alnum:]]*)=\"(.+)\"\])");
-
-			if(regex_search(m_script,match,pattern))
-			{
-				//覚える
-				m_variables[match.str(1)] = match.str(2);
-			}
-		}
-
-#pragma endregion 変数関連
+//#pragma region 変数関連
+//		//変数を記憶
+//		{
+//			smatch match;
+//			regex pattern(R"(\[var ([:alpha:][[:alnum:]]*)=\"(.+)\"\])");
+//
+//			if(regex_search(m_script,match,pattern))
+//			{
+//				//覚える
+//				m_variables[match.str(1)] = match.str(2);
+//			}
+//		}
+//
+//#pragma endregion 変数関連
 
 #pragma endregion タグ解析
 	}
@@ -239,12 +250,22 @@ int main()
 				engine.SendNewPage();
 			}
 
-			engine.Next();
+			try
+			{
+				engine.Next();
+			}
+			catch (const ScriptInterpreteException& ex)
+			{
+				fprintf(stderr, "ScriptInterpreteException!: ");
+				fprintf(stderr,ex.what());
+				scanf_s("");
+				exit(1);
+			}
 
-			char outText[255];
+			char outText[1024];
 
 			//コンソールはSJISで表示してる
-			printf("%s", CharacterConverter::ConvertUtf8ToSJis(engine.GetDisplay(), outText,255));
+			printf("%s", CharacterConverter::ConvertUtf8ToSJis(engine.GetDisplay(), outText, 1024));
 			printf("\n\n>");
 		}
 		else if (iBuff == 'q')
@@ -255,6 +276,8 @@ int main()
 	}
 
 	printf("End of game...\n");
+	char iBuff;
+	scanf_s("%c", &iBuff, 1);
 
     return 0;
 }
