@@ -7,6 +7,9 @@ using namespace std;
 
 class Shakespeare
 {
+	struct Token;
+
+
 public:
 	Shakespeare() : HasEnded(false), NewPageFlag(false) {}
 
@@ -46,6 +49,54 @@ public:
 			return GetDisplay();
 		}
 
+		//変数入力
+		{
+			stringstream pattern;
+			pattern << Token::TagBegin << Token::Input << Token::WhiteSpace
+				//name
+				<< Token::Name << Token::OpAssign << "(" << Token::Variable << ")"
+				//prompt
+				"(" << Token::WhiteSpace << "prompt" << Token::OpAssign << Token::DoubleQuote << "(" << Token::String << ")" << Token::DoubleQuote << ")?"
+				<< Token::TagEnd;
+
+			if (regex_search(searchScript, matchResult, regex(pattern.str())))
+			{
+				//覚える
+				m_variables[matchResult.str(1)] = matchResult.str(2);
+
+				char promptMessage[255];
+				CharacterConverter::ConvertUtf8ToSJis(matchResult.str(3), promptMessage,255);
+				printf(">%s\n>", promptMessage);
+				char inputStr[255];
+				scanf_s("%s", inputStr,255);
+				//入力はSJISでくる
+				char sjisStr[255];
+				//変数登録
+				m_variables[matchResult.str(1)] = CharacterConverter::ConvertSJisToUtf8(inputStr,sjisStr,255);
+
+				//タグを飛ばす
+				//タグ前まで行く
+				m_displayEnd = m_displayBegin + matchResult.position();
+
+				//タグは消す
+				m_script.erase(m_displayEnd, m_displayEnd + matchResult.length());
+			}
+		}
+
+		//変数出力
+		{
+			stringstream pattern;
+			pattern << Token::TagBegin << Token::Embedded << Token::WhiteSpace
+				//exp
+				<< Token::Expression << Token::OpAssign << "(" << Token::Variable << ")"
+				<< Token::TagEnd;
+
+			if (regex_search(searchScript, matchResult, regex(pattern.str())))
+			{
+				m_script.replace(m_displayBegin, m_displayBegin + matchResult.length(0), m_variables[matchResult.str(1)]);
+			}
+		}
+
 		//指示タグがないなら最後までいく
 		m_displayEnd = m_script.end();
 		HasEnded = true;
@@ -74,12 +125,30 @@ public:
 		//改行は全て消す
 		m_script.erase(remove(m_script.begin(), m_script.end(), '\n'), m_script.end());
 
+
+#pragma region タグ解析
 		//改行タグを改行に直す
 		{
 			auto temp = regex_replace(m_script, regex(R"(\[r\])"), "\n");
 			m_script = temp;
 		}
 		
+#pragma region 変数関連
+		//変数を記憶
+		{
+			smatch match;
+			regex pattern(R"(\[var ([:alpha:][[:alnum:]]*)=\"(.+)\"\])");
+
+			if(regex_search(m_script,match,pattern))
+			{
+				//覚える
+				m_variables[match.str(1)] = match.str(2);
+			}
+		}
+
+#pragma endregion 変数関連
+
+#pragma endregion タグ解析
 	}
 
 	bool HasReachedEnd()
@@ -110,38 +179,43 @@ private:
 	//カーソル（逐次表示の表示地点）
 	string::iterator m_cursor;
 
+	//変数
+	map<string,string> m_variables;
+
+
 	//flags
 	bool NewPageFlag;
 	//最後まで行ったか
 	bool HasEnded;
+
+#pragma region lexトークン
+	struct Token
+	{
+		static constexpr const char *Variable = "[:alpha:][[:alnum:]]*";
+		static constexpr const char *Input = "input";
+		static constexpr const char *Embedded = "emb";
+		static constexpr const char *Expression = "exp";
+		static constexpr const char *TagBegin = R"(\[)";
+		static constexpr const char *TagEnd = R"(\])";
+		static constexpr const char *WhiteSpace = R"(\s)";
+		static constexpr const char *Name = "name";
+		static constexpr const char *OpAssign = "=";
+		static constexpr const char *DoubleQuote = R"(\")";
+		static constexpr const char *String = R"([^\"]*)";
+
+	};
+#pragma endregion lexトークン
+
+
+
 };
-
-char* ConvertUtf8ToAnsi(const string& from, char* to)
-{
-	//utf8->utf16
-	auto len = MultiByteToWideChar(CP_UTF8, 0, from.c_str(), -1, 0, 0);
-	auto* unicodeText = new wchar_t[len];
-	MultiByteToWideChar(CP_UTF8, 0, from.c_str(), -1, unicodeText, len);
-
-	//utf16->sjis（正確にはデフォルトのロケール）
-	len = WideCharToMultiByte(CP_ACP, 0, (OLECHAR*)unicodeText, -1, NULL, 0, NULL, NULL);
-	auto* sjisText = new char[len + 1];
-	WideCharToMultiByte(CP_ACP, 0, (OLECHAR*)unicodeText, -1, sjisText, len, NULL, NULL);
-
-	strcpy_s(to, len, sjisText);
-
-	delete[] unicodeText;
-	delete[] sjisText;
-
-	return to;
-}
 
 int main()
 {
 	Shakespeare engine;
 	try
 	{
-		engine.OpenScriptFile("Scripts/Intro.txt");
+		engine.OpenScriptFile("Scripts/test.txt");
 	}
 	catch (const runtime_error& ex)
 	{
@@ -170,7 +244,7 @@ int main()
 			char outText[255];
 
 			//コンソールはSJISで表示してる
-			printf("%s", ConvertUtf8ToAnsi(engine.GetDisplay(), outText));
+			printf("%s", CharacterConverter::ConvertUtf8ToSJis(engine.GetDisplay(), outText,255));
 			printf("\n\n>");
 		}
 		else if (iBuff == 'q')

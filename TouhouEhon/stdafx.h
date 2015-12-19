@@ -21,6 +21,12 @@
 #include <iterator>
 #include <regex>
 #include <stdlib.h>
+#include <map>
+#include <deque>
+#include <functional>
+#include <memory>
 
 #include <Windows.h>
 #include <atlstr.h> //CString—p
+
+#include "CharacterConverter.h"
